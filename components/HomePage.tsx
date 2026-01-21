@@ -71,7 +71,8 @@ function HomePage() {
     } else if (doc.file_type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
       setParsedText(doc.extracted_data?.html || '');
     } else if (doc.file_type.startsWith('image/')) {
-      setParsedText(JSON.stringify(doc.extracted_data, null, 2));
+      // For images, just set a placeholder - we'll use extracted_data directly
+      setParsedText('image');
     }
     
     setLoading(false);
@@ -159,16 +160,12 @@ function HomePage() {
   const isDOCX = fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
   const isImage = fileType.startsWith("image/");
 
-  // Parse extracted data if it's JSON
-  let extractedFields = null;
-  if (isImage && parsedText) {
-    try {
-      const parsed = JSON.parse(parsedText);
-      extractedFields = Array.isArray(parsed.fields) ? parsed.fields : [];
-    } catch (e) {
-      console.error("Failed to parse extracted data:", e);
-      extractedFields = [];
-    }
+  // Get extracted fields directly from selectedDocument for images
+  let extractedFields: any[] = [];
+  if (isImage && selectedDocument?.extracted_data) {
+    extractedFields = Array.isArray(selectedDocument.extracted_data.fields) 
+      ? selectedDocument.extracted_data.fields 
+      : [];
   }
 
   // Format field labels to be human-readable
