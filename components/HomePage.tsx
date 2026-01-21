@@ -9,12 +9,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import FileUpload from "./FileUploader";
-import { FileText, Loader2, Sparkles, Upload, Download, Share2 } from "lucide-react";
+import { FileText, Loader2, Sparkles, Upload, Download, Share2, BarChart3 } from "lucide-react";
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import AnalyticsDashboard from "./AnalyticsDashboard";
+import ExportOptions from "./ExportOptions";
+import DocumentSearch from "./DocumentSearch";
 
 const theme = createTheme({
   palette: {
@@ -43,6 +46,9 @@ function HomePage() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [highlightedText, setHighlightedText] = useState("");
 
   const handleFileUpload = async (file: File) => {
     setUploadedFile(() => {
@@ -74,6 +80,29 @@ function HomePage() {
     }
     
     setLoading(false);
+    setSearchQuery("");
+    setHighlightedText("");
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (query.trim()) {
+      setHighlightedText(query);
+    } else {
+      setHighlightedText("");
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    setHighlightedText("");
+  };
+
+  const getHighlightedContent = (content: string) => {
+    if (!highlightedText || !content) return content;
+    
+    const regex = new RegExp(`(${highlightedText})`, 'gi');
+    return content.replace(regex, '<mark class="bg-yellow-200">$1</mark>');
   };
 
   const isPDF = fileType === "application/pdf";
@@ -147,8 +176,24 @@ function HomePage() {
                     </p>
                   </div>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAnalytics(!showAnalytics)}
+                  className="gap-2 border-blue-200 hover:bg-blue-50"
+                >
+                  <BarChart3 className="w-4 h-4" />
+                  {showAnalytics ? "Hide" : "Show"} Analytics
+                </Button>
               </div>
             </header>
+
+            {/* Analytics Dashboard */}
+            {showAnalytics && (
+              <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+                <AnalyticsDashboard />
+              </div>
+            )}
 
             {/* Main Content */}
             <main className="max-w-7xl mx-auto px-6 lg:px-8 py-12 relative z-50">
@@ -182,7 +227,7 @@ function HomePage() {
                         Upload Your Document
                       </DialogTitle>
                       <p className="text-blue-50 text-sm mt-2">
-                        Supported formats: PDF, DOCX, and images
+                        Supported formats: PDF, DOCX, and Images
                       </p>
                     </DialogHeader>
                     <div className="p-8">
@@ -217,7 +262,7 @@ function HomePage() {
                 {parsedText && !loading && (
                   <Card className="mt-12 w-full max-w-6xl border-0 shadow-2xl overflow-hidden">
                     <div className="bg-gradient-to-r from-gray-50 via-blue-50 to-indigo-50 px-8 py-6 border-b border-gray-200/50">
-                      <div className="flex items-start justify-between">
+                      <div className="flex items-start justify-between mb-4">
                         <div className="space-y-2">
                           <div className="flex items-center gap-3">
                             <h3 className="text-2xl font-bold text-gray-900">
@@ -233,15 +278,20 @@ function HomePage() {
                           </p>
                         </div>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm" className="gap-2">
-                            <Download className="w-4 h-4" />
-                            Download
-                          </Button>
-                          <Button variant="outline" size="sm" className="gap-2">
-                            <Share2 className="w-4 h-4" />
-                            Share
-                          </Button>
+                          <ExportOptions 
+                            parsedText={parsedText}
+                            fileType={fileType}
+                            fileName={selectedDocument?.extracted_data?.original_name || uploadedFile?.name || "document"}
+                          />
                         </div>
+                      </div>
+                      
+                      {/* Search Bar */}
+                      <div className="mt-4">
+                        <DocumentSearch 
+                          onSearch={handleSearch}
+                          onClear={handleClearSearch}
+                        />
                       </div>
                     </div>
                     

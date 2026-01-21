@@ -1,16 +1,45 @@
 # Document Parser
 
-A modern web application for extracting text and data from PDF, DOCX, and image files. Built with Next.js, React, and Supabase.
+A modern web application for extracting text and data from PDF, DOCX, and image files with advanced analytics and export capabilities. Built with Next.js, React, and Supabase.
 
 ## Features
 
+### Core Functionality
 - **Multi-format Support**: Upload and parse PDF, DOCX, and image files
 - **Text Extraction**: Automatically extract text content from documents
-- **Image Data Extraction**: Extract structured data from images using AI
+- **Image Data Extraction**: Extract structured data from images using AI-powered OCR
 - **User Authentication**: Secure login and signup with Supabase Auth
 - **Real-time Processing**: Live progress tracking for document uploads
-- **Modern UI**: Clean, responsive interface with drag-and-drop file upload
+
+### Advanced Features
+- **Analytics Dashboard**: 
+  - View total documents processed
+  - Track document types breakdown (PDF, DOCX, Images)
+  - Monitor processing status (Completed, Processing, Failed)
+  - Visual progress bars and statistics
+
+- **Export Options**:
+  - Export extracted data as JSON, CSV, or TXT
+  - Download with proper formatting
+  - Preserve data structure for images
+
+- **Document Search**:
+  - Search within extracted content
+  - Real-time text highlighting
+  - Clear and intuitive interface
+
+- **Document Management**:
+  - Browse all uploaded documents via sidebar
+  - Filter by document type
+  - View document history
+  - Quick access to previously processed files
+
+### UI/UX
+- **Modern Interface**: Clean, responsive design with gradient backgrounds
+- **Drag-and-Drop Upload**: Easy file upload with visual feedback
 - **File Size Limit**: Supports files up to 8MB
+- **Loading States**: Beautiful animated loaders during processing
+- **Toast Notifications**: Real-time feedback for all operations
 
 ## Tech Stack
 
