@@ -41,11 +41,13 @@ export default function FileUpload({
   setParsedText,
   setFileType,
   maxSize,
+  onDocumentCreated,
 }: {
   onFileUpload: (file: File) => void;
   setParsedText: (text: string) => void;
   setFileType: (type: string) => void;
   maxSize: number;
+  onDocumentCreated?: (doc: any) => void;
 }) {
   const [filesToUpload, setFilesToUpload] = useState<FileUploadProgress[]>([]);
   const { toast } = useToast();
@@ -154,6 +156,18 @@ export default function FileUpload({
               clearInterval(pollInterval);
               setParsedText(JSON.stringify(data.extracted_data, null, 2));
               setFileType(file.type);
+              
+              // Fetch the full document and pass it back
+              const { data: fullDoc } = await supabase
+                .from("documents")
+                .select("*")
+                .eq("file_path", result.filePath)
+                .single();
+              
+              if (fullDoc && onDocumentCreated) {
+                onDocumentCreated(fullDoc);
+              }
+              
               toast({
                 title: "✅ Success",
                 description: "Data extracted successfully!",
@@ -177,9 +191,21 @@ export default function FileUpload({
         }
       } else {
         // Handle PDF/DOCX files
-        if (result.success) {
+        if (result.success && result.documentId) {
           setParsedText(result.parsedText);
           setFileType(result.fileType);
+          
+          // Fetch the full document and pass it back
+          const { data: fullDoc } = await supabase
+            .from("documents")
+            .select("*")
+            .eq("id", result.documentId)
+            .single();
+          
+          if (fullDoc && onDocumentCreated) {
+            onDocumentCreated(fullDoc);
+          }
+          
           toast({
             title: "✅ Success",
             description: "Document processed successfully!",

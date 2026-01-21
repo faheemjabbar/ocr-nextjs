@@ -67,7 +67,8 @@ function HomePage() {
     setFileType(doc.file_type);
     
     if (doc.file_type === 'application/pdf') {
-      setParsedText(doc.extracted_data?.text || '');
+      // Check if HTML exists (edited), otherwise use text
+      setParsedText(doc.extracted_data?.html || doc.extracted_data?.text || '');
     } else if (doc.file_type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
       setParsedText(doc.extracted_data?.html || '');
     } else if (doc.file_type.startsWith('image/')) {
@@ -95,38 +96,77 @@ function HomePage() {
   };
 
   const handleSaveChanges = async () => {
-    if (!selectedDocument) return;
+    try {
+      console.log('=== Starting Save ===');
+      
+      if (!selectedDocument) {
+        console.log('No selected document');
+        return;
+      }
 
-    const updatedData = { ...selectedDocument.extracted_data };
-    
-    if (isPDF) {
-      updatedData.text = editedContent;
-    } else if (isDOCX) {
-      updatedData.html = editedContent;
-    } else if (isImage) {
-      // For images, convert HTML back to structured data
-      updatedData.formatted_text = editedContent;
-    }
+      console.log('Selected Document:', selectedDocument);
+      console.log('Edited Content:', editedContent);
 
-    updatedData.edited_at = new Date().toISOString();
+      const updatedData = { ...selectedDocument.extracted_data };
+      
+      if (isPDF) {
+        // Store both HTML (for display) and plain text (for search/export)
+        updatedData.html = editedContent;
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = editedContent;
+        updatedData.text = tempDiv.textContent || tempDiv.innerText || '';
+        console.log('PDF - Saved HTML and text');
+      } else if (isDOCX) {
+        updatedData.html = editedContent;
+        console.log('DOCX - HTML:', updatedData.html);
+      } else if (isImage) {
+        // For images, store the HTML content
+        updatedData.formatted_text = editedContent;
+        console.log('Image - Formatted text:', updatedData.formatted_text);
+      }
 
-    const { error } = await supabase
-      .from('documents')
-      .update({ extracted_data: updatedData })
-      .eq('id', selectedDocument.id);
+      updatedData.edited_at = new Date().toISOString();
 
-    if (error) {
+      console.log('Updating document with ID:', selectedDocument.id);
+      console.log('Updated data:', updatedData);
+
+      const { data, error } = await supabase
+        .from('documents')
+        .update({ extracted_data: updatedData })
+        .eq('id', selectedDocument.id)
+        .select();
+
+      console.log('Supabase response - data:', data);
+      console.log('Supabase response - error:', error);
+
+      if (error) {
+        console.error('Save failed:', error);
+        toast({
+          variant: "destructive",
+          title: "❌ Save Failed",
+          description: error.message,
+        });
+      } else {
+        console.log('Save successful!');
+        // Update parsedText with HTML for display
+        setParsedText(editedContent);
+        
+        setSelectedDocument({
+          ...selectedDocument,
+          extracted_data: updatedData
+        });
+        setIsEditing(false);
+        toast({
+          title: "✅ Changes Saved",
+          description: "Your document has been updated successfully",
+        });
+      }
+    } catch (err) {
+      console.error('=== Error in handleSaveChanges ===', err);
       toast({
         variant: "destructive",
-        title: "❌ Save Failed",
-        description: error.message,
-      });
-    } else {
-      setParsedText(editedContent);
-      setIsEditing(false);
-      toast({
-        title: "✅ Changes Saved",
-        description: "Your document has been updated successfully",
+        title: "❌ Error",
+        description: err instanceof Error ? err.message : 'Unknown error occurred',
       });
     }
   };
@@ -296,6 +336,9 @@ function HomePage() {
                         }}
                         setFileType={setFileType}
                         maxSize={8 * 1024 * 1024}
+                        onDocumentCreated={(doc) => {
+                          setSelectedDocument(doc);
+                        }}
                       />
                     </div>
                   </DialogContent>
@@ -342,7 +385,11 @@ function HomePage() {
                               setIsEditing(true);
                               // Convert content to HTML for editing
                               if (isPDF) {
-                                setEditedContent(textToHtml(parsedText));
+                                // Check if already HTML, otherwise convert
+                                const content = parsedText.includes('<p>') || parsedText.includes('<br') 
+                                  ? parsedText 
+                                  : textToHtml(parsedText);
+                                setEditedContent(content);
                               } else if (isDOCX) {
                                 setEditedContent(parsedText);
                               } else if (isImage && extractedFields) {
@@ -382,12 +429,17 @@ function HomePage() {
                           
                           <div className="flex gap-2 pt-4">
                             <Button 
-                              onClick={handleSaveChanges}
+                              type="button"
+                              onClick={() => {
+                                console.log('Save button clicked!');
+                                handleSaveChanges();
+                              }}
                               className="bg-green-600 hover:bg-green-700"
                             >
                               Save Changes
                             </Button>
                             <Button 
+                              type="button"
                               variant="outline" 
                               onClick={() => {
                                 setIsEditing(false);
@@ -404,7 +456,7 @@ function HomePage() {
                             className="prose prose-lg dark:prose-invert max-w-none bg-white dark:bg-gray-800 p-8 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm max-h-[600px] overflow-y-auto"
                             dangerouslySetInnerHTML={{ 
                               __html: isPDF 
-                                ? textToHtml(parsedText)
+                                ? (parsedText.includes('<p>') || parsedText.includes('<br') ? parsedText : textToHtml(parsedText))
                                 : isDOCX 
                                   ? parsedText 
                                   : isImage && extractedFields

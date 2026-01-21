@@ -99,7 +99,26 @@ export default function Sidebar({ dimmed = false, onDocumentSelect, selectedDocu
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    console.log('Logout clicked');
+    try {
+      const { error } = await supabase.auth.signOut();
+      console.log('SignOut result:', { error });
+      
+      // Force clear local storage regardless of API response
+      localStorage.removeItem('sb-ghwopktzrmrgnhviyhvf-auth-token');
+      
+      // Manually set session to null to trigger UI update
+      setSession(null);
+      
+      // Reload page to ensure clean state
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Logout error:', err);
+      // Force logout anyway
+      localStorage.clear();
+      setSession(null);
+      window.location.href = '/';
+    }
   };
 
   const getFileName = (filePath: string) => {
