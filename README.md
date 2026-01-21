@@ -2,6 +2,8 @@
 
 A modern web application for extracting text and data from PDF, DOCX, and image files with advanced analytics and export capabilities. Built with Next.js, React, and Supabase.
 
+⚠️ Note: Image OCR is powered by Supabase Edge Functions and requires additional backend setup (see below).
+
 ## Features
 
 ### Core Functionality
@@ -65,13 +67,8 @@ A modern web application for extracting text and data from PDF, DOCX, and image 
 
 1. Clone the repository:
 ```bash
-<<<<<<< HEAD
-git clone <your-repo-url>
-cd my-app
-=======
 git clone https://github.com/faheemjabbar/ocr-nextjs
 cd ocr-nextjs
->>>>>>> f3d39b96b73171e6734660e1e10cc153cc02cb8c
 ```
 
 2. Install dependencies:
@@ -85,6 +82,7 @@ Create a `.env.local` file in the root directory:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_key
 ```
 
 4. Run the development server:
@@ -103,6 +101,30 @@ npm run dev
    - PDF files (.pdf)
    - Word documents (.docx)
    - Images (.png, .jpg, .jpeg, .gif, .webp)
+  
+## Image OCR
+  
+Image processing is not handled directly in the Next.js API route.
+
+How Image OCR Works
+
+- Images are uploaded to Supabase Storage
+- A document record is created in the database
+- The frontend explicitly calls a Supabase Edge Function
+
+The Edge Function:
+
+- Downloads the image from storage
+- Sends it to an OCR provider
+- Stores structured results in the database
+
+## Required Setup
+
+To enable image OCR:
+
+- You must create your own Supabase Edge Function
+- Add authentication verification inside the function
+- Configure environment variables in Supabase
 
 ## Project Structure
 
@@ -130,13 +152,7 @@ npm run dev
 - `npm start` - Start production server
 - `npm run lint` - Run ESLint
 
-<<<<<<< HEAD
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## License
-
-This project is private and not licensed for public use.
-=======
->>>>>>> f3d39b96b73171e6734660e1e10cc153cc02cb8c
