@@ -176,6 +176,7 @@ export default function FileUpload({
           }, 2000);
         }
       } else {
+        // Handle PDF/DOCX files
         if (result.success) {
           setParsedText(result.parsedText);
           setFileType(result.fileType);
@@ -217,12 +218,16 @@ export default function FileUpload({
       const file = acceptedFiles[0];
       setFilesToUpload([{ file, progress: 100 }]);
       
-      // Upload the file first
+      // Trigger loading state first
+      onFileUpload(file);
+      
+      // Then upload the file
       const success = await uploadFileToApi(file);
       
-      // Only trigger loading state if upload was successful
-      if (success) {
-        onFileUpload(file);
+      // If upload failed, reset loading state
+      if (!success) {
+        setParsedText("");
+        setFileType("");
       }
     },
     [onFileUpload, userId, toast]
