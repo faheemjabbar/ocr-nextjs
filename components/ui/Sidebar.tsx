@@ -1,65 +1,12 @@
 'use client';
 
 import * as React from 'react';
-import { styled, useTheme, Theme, CSSObject } from '@mui/material/styles';
-import Box from '@mui/material/Box';
-import MuiDrawer from '@mui/material/Drawer';
-import List from '@mui/material/List';
-import Divider from '@mui/material/Divider';
-import IconButton from '@mui/material/IconButton';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import Avatar from '@mui/material/Avatar';
-import Typography from '@mui/material/Typography';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import DescriptionIcon from '@mui/icons-material/Description';
-import ImageIcon from '@mui/icons-material/Image';
-import LogoutIcon from '@mui/icons-material/Logout';
+import { ChevronLeft, FileText, Image as ImageIcon, LogOut, File } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { Session } from '@supabase/supabase-js';
-
-const drawerWidth = 240;
-
-const openedMixin = (theme: Theme): CSSObject => ({
-  width: drawerWidth,
-  transition: theme.transitions.create('width', {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.enteringScreen,
-  }),
-  overflowX: 'hidden',
-});
-
-const closedMixin = (theme: Theme): CSSObject => ({
-  transition: theme.transitions.create('width', {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  overflowX: 'hidden',
-  width: `calc(${theme.spacing(7)} + 1px)`,
-});
-
-const Drawer = styled(MuiDrawer, {
-  shouldForwardProp: (prop) => prop !== 'open',
-})<{ open: boolean }>(({ theme, open }) => ({
-  width: drawerWidth,
-  flexShrink: 0,
-  whiteSpace: 'nowrap',
-  boxSizing: 'border-box',
-  ...(open && {
-    ...openedMixin(theme),
-    '& .MuiDrawer-paper': openedMixin(theme),
-  }),
-  ...(!open && {
-    ...closedMixin(theme),
-    '& .MuiDrawer-paper': closedMixin(theme),
-  }),
-}));
+import { Button } from './button';
+import { ScrollArea } from './scroll-area';
+import { cn } from '@/lib/utils';
 
 interface Document {
   id: string;
@@ -77,7 +24,6 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ dimmed = false, onDocumentSelect, selectedDocumentId }: SidebarProps) {
-  const theme = useTheme();
   const [open, setOpen] = React.useState(false);
   const [session, setSession] = React.useState<Session | null>(null);
   const [expandedCategory, setExpandedCategory] = React.useState<string | null>(null);
@@ -109,7 +55,6 @@ export default function Sidebar({ dimmed = false, onDocumentSelect, selectedDocu
     if (session?.user) {
       fetchDocuments();
       
-      // Subscribe to realtime changes
       const channel = supabase
         .channel('documents-changes')
         .on(
@@ -167,175 +112,112 @@ export default function Sidebar({ dimmed = false, onDocumentSelect, selectedDocu
   };
 
   const items = [
-    { label: 'PDFs', icon: <PictureAsPdfIcon />, docs: documents.pdfs, color: '#dc2626' },
-    { label: 'DOCX', icon: <DescriptionIcon />, docs: documents.docx, color: '#2563eb' },
-    { label: 'Images', icon: <ImageIcon />, docs: documents.images, color: '#16a34a' },
+    { label: 'PDFs', icon: FileText, docs: documents.pdfs, color: 'text-red-600 dark:text-red-400' },
+    { label: 'DOCX', icon: File, docs: documents.docx, color: 'text-blue-600 dark:text-blue-400' },
+    { label: 'Images', icon: ImageIcon, docs: documents.images, color: 'text-green-600 dark:text-green-400' },
   ];
 
   return (
-    <Drawer 
-      variant="permanent" 
-      open={open}
+    <div
+      className={cn(
+        "fixed left-0 top-0 h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 z-50",
+        open ? "w-60" : "w-16",
+        dimmed && "opacity-30 pointer-events-none"
+      )}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
-      sx={{
-        opacity: dimmed ? 0.3 : 1,
-        transition: 'opacity 0.3s ease',
-        pointerEvents: dimmed ? 'none' : 'auto',
-      }}
     >
-      {/* User Profile Section */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          p: 2,
-          gap: 1,
-          flexDirection: open ? 'row' : 'column',
-        }}
-      >
-        <Avatar 
-          sx={{ 
-            bgcolor: 'primary.main', 
-            width: 32, 
-            height: 32,
-            fontSize: '0.875rem',
-          }}
-        >
-          {getUserInitials()}
-        </Avatar>
-        {open && (
-          <Box sx={{ minWidth: 0, flex: 1 }}>
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                fontWeight: 600,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {session?.user?.email?.split('@')[0]}
-            </Typography>
-            <Typography 
-              variant="caption" 
-              sx={{ 
-                color: 'text.secondary',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                display: 'block',
-              }}
-            >
-              {session?.user?.email}
-            </Typography>
-          </Box>
-        )}
-      </Box>
-
-      <Divider />
-
-      {/* Document Categories */}
-      <List>
-        {items.map((item) => (
-          <Box key={item.label}>
-            <ListItem disablePadding sx={{ display: 'block' }}>
-              <ListItemButton
-                onClick={() => {
-                  const expandKey = `expand_${item.label}`;
-                  setExpandedCategory(prev => prev === expandKey ? null : expandKey);
-                }}
-                sx={{
-                  minHeight: 48,
-                  justifyContent: open ? 'initial' : 'center',
-                  px: 2.5,
-                }}
-              >
-                <ListItemIcon
-                  sx={{
-                    minWidth: 0,
-                    mr: open ? 3 : 'auto',
-                    justifyContent: 'center',
-                    color: item.color,
-                  }}
-                >
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText
-                  primary={`${item.label} (${item.docs.length})`}
-                  sx={{ opacity: open ? 1 : 0 }}
-                />
-              </ListItemButton>
-            </ListItem>
-
-            {/* Document List */}
-            {open && expandedCategory === `expand_${item.label}` && item.docs.length > 0 && (
-              <List component="div" disablePadding>
-                {item.docs.map((doc) => (
-                  <ListItemButton
-                    key={doc.id}
-                    sx={{
-                      pl: 4,
-                      backgroundColor: selectedDocumentId === doc.id ? 'action.selected' : 'transparent',
-                      '&:hover': {
-                        backgroundColor: 'action.hover',
-                      },
-                    }}
-                    onClick={() => onDocumentSelect?.(doc)}
-                  >
-                    <ListItemText
-                      primary={doc.extracted_data?.original_name || getFileName(doc.file_path)}
-                      secondary={new Date(doc.created_at).toLocaleDateString()}
-                      primaryTypographyProps={{
-                        variant: 'body2',
-                        noWrap: true,
-                        sx: { fontSize: '0.875rem' },
-                      }}
-                      secondaryTypographyProps={{
-                        variant: 'caption',
-                        sx: { fontSize: '0.75rem' },
-                      }}
-                    />
-                  </ListItemButton>
-                ))}
-              </List>
+      <div className="flex flex-col h-full">
+        {/* User Profile Section */}
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className={cn(
+            "flex items-center gap-3",
+            !open && "justify-center flex-col gap-2"
+          )}>
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+              {getUserInitials()}
+            </div>
+            {open && (
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                  {session?.user?.email?.split('@')[0]}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  {session?.user?.email}
+                </p>
+              </div>
             )}
-          </Box>
-        ))}
-      </List>
+          </div>
+        </div>
 
-      {/* Logout Button at Bottom */}
-      <Box sx={{ marginTop: 'auto', borderTop: 1, borderColor: 'divider' }}>
-        <ListItem disablePadding sx={{ display: 'block' }}>
-          <ListItemButton
+        {/* Document Categories */}
+        <ScrollArea className="flex-1">
+          <div className="p-2">
+            {items.map((item) => (
+              <div key={item.label} className="mb-1">
+                <button
+                  onClick={() => {
+                    const expandKey = `expand_${item.label}`;
+                    setExpandedCategory(prev => prev === expandKey ? null : expandKey);
+                  }}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors",
+                    !open && "justify-center"
+                  )}
+                >
+                  <item.icon className={cn("w-5 h-5 flex-shrink-0", item.color)} />
+                  {open && (
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex-1 text-left">
+                      {item.label} ({item.docs.length})
+                    </span>
+                  )}
+                </button>
+
+                {/* Document List */}
+                {open && expandedCategory === `expand_${item.label}` && item.docs.length > 0 && (
+                  <div className="ml-4 mt-1 space-y-1">
+                    {item.docs.map((doc) => (
+                      <button
+                        key={doc.id}
+                        onClick={() => onDocumentSelect?.(doc)}
+                        className={cn(
+                          "w-full text-left px-3 py-2 rounded-lg text-xs transition-colors",
+                          selectedDocumentId === doc.id
+                            ? "bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100"
+                            : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400"
+                        )}
+                      >
+                        <p className="font-medium truncate">
+                          {doc.extracted_data?.original_name || getFileName(doc.file_path)}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
+                          {new Date(doc.created_at).toLocaleDateString()}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+
+        {/* Logout Button */}
+        <div className="p-2 border-t border-gray-200 dark:border-gray-700">
+          <button
             onClick={handleLogout}
-            sx={{
-              minHeight: 48,
-              justifyContent: open ? 'initial' : 'center',
-              px: 2.5,
-            }}
+            className={cn(
+              "w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-red-600 dark:text-red-400",
+              !open && "justify-center"
+            )}
           >
-            <ListItemIcon
-              sx={{
-                minWidth: 0,
-                mr: open ? 3 : 'auto',
-                justifyContent: 'center',
-                color: 'error.main',
-              }}
-            >
-              <LogoutIcon />
-            </ListItemIcon>
-            <ListItemText
-              primary="Logout"
-              sx={{ opacity: open ? 1 : 0 }}
-              primaryTypographyProps={{
-                sx: { color: 'error.main' }
-              }}
-            />
-          </ListItemButton>
-        </ListItem>
-      </Box>
-    </Drawer>
+            <LogOut className="w-5 h-5 flex-shrink-0" />
+            {open && (
+              <span className="text-sm font-medium">Logout</span>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

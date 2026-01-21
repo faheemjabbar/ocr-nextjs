@@ -9,24 +9,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import FileUpload from "./FileUploader";
-import { FileText, Loader2, Sparkles, Upload, Download, Share2, BarChart3 } from "lucide-react";
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import Box from '@mui/material/Box';
+import { FileText, Loader2, Sparkles, Upload, BarChart3, Moon, Sun } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import AnalyticsDashboard from "./AnalyticsDashboard";
 import ExportOptions from "./ExportOptions";
 import DocumentSearch from "./DocumentSearch";
-
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#3b82f6',
-    },
-  },
-});
-
+import { ThemeProvider, useTheme } from "./ThemeProvider";
 import Sidebar from '@/components/ui/Sidebar';
 
 interface Document {
@@ -49,6 +39,7 @@ function HomePage() {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [highlightedText, setHighlightedText] = useState("");
+  const { theme, toggleTheme } = useTheme();
 
   const handleFileUpload = async (file: File) => {
     setUploadedFile(() => {
@@ -136,31 +127,26 @@ function HomePage() {
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#fafafa' }}>
-        <Sidebar 
-          dimmed={open} 
-          onDocumentSelect={handleDocumentSelect}
-          selectedDocumentId={selectedDocument?.id}
-        />
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Sidebar */}
+      <Sidebar 
+        dimmed={open} 
+        onDocumentSelect={handleDocumentSelect}
+        selectedDocumentId={selectedDocument?.id}
+      />
 
-        <Box 
-          component="main" 
-          sx={{ 
-            flexGrow: 1, 
-            position: 'relative',
-          }}
-        >
-          {open && (
-            <div 
-              className="fixed inset-0 bg-black/50 z-40"
-              style={{ marginLeft: '57px' }}
-            />
-          )}
-          
-          <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative">
+      {/* Main Content Area */}
+      <div className="flex-1 ml-16">
+        {open && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-40"
+            style={{ marginLeft: '64px' }}
+          />
+        )}
+        
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative">
             {/* Modern Header */}
-            <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-sm top-0 z-30">
+            <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm top-0 z-30">
               <div className="max-w-7xl mx-auto px-6 lg:px-8" style={{ height: '72px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div className="flex items-center gap-4">
                   <div className="p-2.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
@@ -170,21 +156,35 @@ function HomePage() {
                     <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                       Document Parser
                     </h1>
-                    <p className="text-sm text-gray-500 flex items-center gap-1">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
                       <Sparkles className="w-3 h-3" />
                       AI-powered text extraction
                     </p>
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowAnalytics(!showAnalytics)}
-                  className="gap-2 border-blue-200 hover:bg-blue-50"
-                >
-                  <BarChart3 className="w-4 h-4" />
-                  {showAnalytics ? "Hide" : "Show"} Analytics
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={toggleTheme}
+                    className="gap-2 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    {theme === "dark" ? (
+                      <Sun className="w-4 h-4" />
+                    ) : (
+                      <Moon className="w-4 h-4" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAnalytics(!showAnalytics)}
+                    className="gap-2 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    {showAnalytics ? "Hide" : "Show"} Analytics
+                  </Button>
+                </div>
               </div>
             </header>
 
@@ -200,10 +200,10 @@ function HomePage() {
               <div className="flex flex-col items-center justify-center">
                 {!parsedText && !loading && (
                   <div className="text-center mb-8 space-y-3">
-                    <h2 className="text-4xl font-bold text-gray-800">
+                    <h2 className="text-4xl font-bold text-gray-800 dark:text-gray-100">
                       Transform Your Documents
                     </h2>
-                    <p className="text-lg text-gray-600 max-w-2xl">
+                    <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl">
                       Upload PDFs, Word documents, or images and extract text instantly with our advanced parsing technology
                     </p>
                   </div>
@@ -220,7 +220,7 @@ function HomePage() {
                       Upload Document
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[550px] p-0 bg-white rounded-3xl shadow-2xl overflow-hidden border-0">
+                  <DialogContent className="sm:max-w-[550px] p-0 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden border-0">
                     <DialogHeader className="p-8 pb-6 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600">
                       <DialogTitle className="text-2xl font-bold text-white flex items-center gap-2">
                         <Upload className="w-6 h-6" />
@@ -252,8 +252,8 @@ function HomePage() {
                         <Loader2 className="w-16 h-16 text-blue-600 animate-spin relative z-10" />
                       </div>
                       <div className="text-center space-y-2">
-                        <p className="text-xl font-semibold text-gray-800">Processing your document</p>
-                        <p className="text-sm text-gray-500">This may take a few moments...</p>
+                        <p className="text-xl font-semibold text-gray-800 dark:text-gray-100">Processing your document</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">This may take a few moments...</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -272,7 +272,7 @@ function HomePage() {
                               {getFileTypeInfo().label}
                             </Badge>
                           </div>
-                          <p className="text-sm text-gray-600 flex items-center gap-2">
+                          <p className="text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2">
                             <FileText className="w-4 h-4" />
                             {selectedDocument?.extracted_data?.original_name || uploadedFile?.name}
                           </p>
@@ -297,8 +297,8 @@ function HomePage() {
                     
                     <CardContent className="p-8">
                       {isPDF ? (
-                        <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-8 rounded-2xl border border-gray-200 shadow-inner max-h-[600px] overflow-y-auto">
-                          <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono leading-relaxed">
+                        <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 p-8 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-inner max-h-[600px] overflow-y-auto">
+                          <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 font-mono leading-relaxed">
                             {parsedText}
                           </pre>
                         </div>
@@ -343,8 +343,8 @@ function HomePage() {
                           )}
                         </div>
                       ) : (
-                        <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-8 rounded-2xl border border-gray-200 shadow-inner max-h-[600px] overflow-y-auto">
-                          <p className="text-gray-800 leading-relaxed">{parsedText}</p>
+                        <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 p-8 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-inner max-h-[600px] overflow-y-auto">
+                          <p className="text-gray-800 dark:text-gray-200 leading-relaxed">{parsedText}</p>
                         </div>
                       )}
                     </CardContent>
@@ -359,13 +359,13 @@ function HomePage() {
                       { icon: Upload, title: 'Word Files', desc: 'Parse DOCX files and preserve formatting' },
                       { icon: Sparkles, title: 'Image OCR', desc: 'Extract text and data from images using AI' }
                     ].map((feature, i) => (
-                      <Card key={i} className="border-0 shadow-lg hover:shadow-xl transition-shadow bg-white/80 backdrop-blur">
+                      <Card key={i} className="border-0 shadow-lg hover:shadow-xl transition-shadow bg-white/80 dark:bg-gray-800/80 backdrop-blur">
                         <CardContent className="p-6 text-center space-y-3">
                           <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mx-auto">
                             <feature.icon className="w-6 h-6 text-white" />
                           </div>
-                          <h3 className="font-semibold text-gray-900">{feature.title}</h3>
-                          <p className="text-sm text-gray-600">{feature.desc}</p>
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100">{feature.title}</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-300">{feature.desc}</p>
                         </CardContent>
                       </Card>
                     ))}
@@ -383,10 +383,15 @@ function HomePage() {
               </div>
             </footer>
           </div>
-        </Box>
-      </Box>
-    </ThemeProvider>
+        </div>
+      </div>
   );
 }
 
-export default HomePage;
+export default function HomePageWithTheme() {
+  return (
+    <ThemeProvider>
+      <HomePage />
+    </ThemeProvider>
+  );
+}

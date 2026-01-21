@@ -36,6 +36,7 @@ A modern web application for extracting text and data from PDF, DOCX, and image 
 
 ### UI/UX
 - **Modern Interface**: Clean, responsive design with gradient backgrounds
+- **Dark Theme**: Toggle between light and dark modes with persistent preference
 - **Drag-and-Drop Upload**: Easy file upload with visual feedback
 - **File Size Limit**: Supports files up to 8MB
 - **Loading States**: Beautiful animated loaders during processing

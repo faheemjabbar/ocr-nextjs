@@ -92,20 +92,20 @@ export default function AnalyticsDashboard() {
   return (
     <div className="w-full space-y-6">
       <div className="flex items-center gap-3 mb-6">
-        <TrendingUp className="w-6 h-6 text-blue-600" />
-        <h2 className="text-2xl font-bold text-gray-900">Analytics Overview</h2>
+        <TrendingUp className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Analytics Overview</h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((stat, index) => (
-          <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+          <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow dark:bg-gray-800">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">{stat.title}</p>
-                  <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{stat.title}</p>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{stat.value}</p>
                 </div>
-                <div className={`p-4 rounded-2xl ${stat.bgColor}`}>
+                <div className={`p-4 rounded-2xl ${stat.bgColor} dark:opacity-80`}>
                   <stat.icon className={`w-8 h-8 ${stat.textColor}`} />
                 </div>
               </div>
@@ -115,14 +115,14 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* Status Overview */}
-      <Card className="border-0 shadow-lg">
+      <Card className="border-0 shadow-lg dark:bg-gray-800">
         <CardContent className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Processing Status</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Processing Status</h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Completed</span>
+              <span className="text-gray-600 dark:text-gray-300">Completed</span>
               <div className="flex items-center gap-3">
-                <div className="w-48 bg-gray-200 rounded-full h-2">
+                <div className="w-48 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div
                     className="bg-green-500 h-2 rounded-full"
                     style={{
@@ -130,15 +130,15 @@ export default function AnalyticsDashboard() {
                     }}
                   />
                 </div>
-                <span className="text-sm font-semibold text-gray-900 w-12 text-right">
+                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 w-12 text-right">
                   {analytics.completedCount}
                 </span>
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Processing</span>
+              <span className="text-gray-600 dark:text-gray-300">Processing</span>
               <div className="flex items-center gap-3">
-                <div className="w-48 bg-gray-200 rounded-full h-2">
+                <div className="w-48 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div
                     className="bg-yellow-500 h-2 rounded-full"
                     style={{
@@ -146,15 +146,15 @@ export default function AnalyticsDashboard() {
                     }}
                   />
                 </div>
-                <span className="text-sm font-semibold text-gray-900 w-12 text-right">
+                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 w-12 text-right">
                   {analytics.processingCount}
                 </span>
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Failed</span>
+              <span className="text-gray-600 dark:text-gray-300">Failed</span>
               <div className="flex items-center gap-3">
-                <div className="w-48 bg-gray-200 rounded-full h-2">
+                <div className="w-48 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div
                     className="bg-red-500 h-2 rounded-full"
                     style={{
@@ -162,7 +162,7 @@ export default function AnalyticsDashboard() {
                     }}
                   />
                 </div>
-                <span className="text-sm font-semibold text-gray-900 w-12 text-right">
+                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 w-12 text-right">
                   {analytics.failedCount}
                 </span>
               </div>
