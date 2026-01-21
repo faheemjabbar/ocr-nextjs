@@ -4,6 +4,11 @@ A modern web application for extracting text and data from PDF, DOCX, and image 
 
 ⚠️ Note: Image OCR is powered by Supabase Edge Functions and requires additional backend setup (see below).
 
+## Demo
+
+https://github.com/user-attachments/assets/3fb39e65-9229-4551-9fd4-4b5e544eb021
+
+
 ## Features
 
 ### Core Functionality
