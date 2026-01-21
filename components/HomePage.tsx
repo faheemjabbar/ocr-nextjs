@@ -9,7 +9,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import FileUpload from "./FileUploader";
-import { FileText, Loader2, Sparkles, Upload, BarChart3, Moon, Sun } from "lucide-react";
+import { FileText, Loader2, Sparkles, Upload, BarChart3, Moon, Sun, Edit } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,8 @@ import ExportOptions from "./ExportOptions";
 import DocumentSearch from "./DocumentSearch";
 import { ThemeProvider, useTheme } from "./ThemeProvider";
 import Sidebar from '@/components/ui/Sidebar';
+import TiptapEditor from "./TiptapEditor";
+import { supabase } from "@/lib/supabase";
 
 interface Document {
   id: string;
@@ -39,6 +41,8 @@ function HomePage() {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [highlightedText, setHighlightedText] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedContent, setEditedContent] = useState("");
   const { theme, toggleTheme } = useTheme();
 
   const handleFileUpload = async (file: File) => {
@@ -89,11 +93,66 @@ function HomePage() {
     setHighlightedText("");
   };
 
+  const handleSaveChanges = async () => {
+    if (!selectedDocument) return;
+
+    const updatedData = { ...selectedDocument.extracted_data };
+    
+    if (isPDF) {
+      updatedData.text = editedContent;
+    } else if (isDOCX) {
+      updatedData.html = editedContent;
+    } else if (isImage) {
+      // For images, convert HTML back to structured data
+      updatedData.formatted_text = editedContent;
+    }
+
+    updatedData.edited_at = new Date().toISOString();
+
+    const { error } = await supabase
+      .from('documents')
+      .update({ extracted_data: updatedData })
+      .eq('id', selectedDocument.id);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "❌ Save Failed",
+        description: error.message,
+      });
+    } else {
+      setParsedText(editedContent);
+      setIsEditing(false);
+      toast({
+        title: "✅ Changes Saved",
+        description: "Your document has been updated successfully",
+      });
+    }
+  };
+
   const getHighlightedContent = (content: string) => {
     if (!highlightedText || !content) return content;
     
     const regex = new RegExp(`(${highlightedText})`, 'gi');
     return content.replace(regex, '<mark class="bg-yellow-200">$1</mark>');
+  };
+
+  // Convert plain text to HTML with preserved formatting
+  const textToHtml = (text: string) => {
+    return text
+      .split('\n')
+      .map(line => line.trim() ? `<p>${line}</p>` : '<br/>')
+      .join('');
+  };
+
+  // Format image fields as HTML
+  const formatImageDataAsHtml = (fields: any[]) => {
+    if (!fields || !Array.isArray(fields) || fields.length === 0) {
+      return '<p>No data extracted from the image</p>';
+    }
+    return fields
+      .map(field => `<p><strong>${formatLabel(field.key)}:</strong> ${field.value}</p>`)
+      .join('');
   };
 
   const isPDF = fileType === "application/pdf";
@@ -105,9 +164,10 @@ function HomePage() {
   if (isImage && parsedText) {
     try {
       const parsed = JSON.parse(parsedText);
-      extractedFields = parsed.fields || [];
+      extractedFields = Array.isArray(parsed.fields) ? parsed.fields : [];
     } catch (e) {
       console.error("Failed to parse extracted data:", e);
+      extractedFields = [];
     }
   }
 
@@ -278,6 +338,26 @@ function HomePage() {
                           </p>
                         </div>
                         <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => {
+                              setIsEditing(true);
+                              // Convert content to HTML for editing
+                              if (isPDF) {
+                                setEditedContent(textToHtml(parsedText));
+                              } else if (isDOCX) {
+                                setEditedContent(parsedText);
+                              } else if (isImage && extractedFields) {
+                                setEditedContent(formatImageDataAsHtml(extractedFields));
+                              } else {
+                                setEditedContent(parsedText);
+                              }
+                            }}
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit
+                          </Button>
                           <ExportOptions 
                             parsedText={parsedText}
                             fileType={fileType}
@@ -296,56 +376,49 @@ function HomePage() {
                     </div>
                     
                     <CardContent className="p-8">
-                      {isPDF ? (
-                        <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 p-8 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-inner max-h-[600px] overflow-y-auto">
-                          <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 font-mono leading-relaxed">
-                            {parsedText}
-                          </pre>
-                        </div>
-                      ) : isDOCX ? (
-                        <div 
-                          className="prose prose-lg max-w-none bg-white p-8 rounded-2xl border border-gray-200 shadow-sm max-h-[600px] overflow-y-auto"
-                          contentEditable
-                          suppressContentEditableWarning
-                          dangerouslySetInnerHTML={{ __html: parsedText }}
-                          style={{
-                            outline: 'none',
-                            lineHeight: '1.8',
-                          }}
-                        />
-                      ) : isImage && extractedFields ? (
-                        <div className="space-y-6">
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {extractedFields.map((field: any, index: number) => (
-                              <Card 
-                                key={index}
-                                className="bg-gradient-to-br from-white to-blue-50/50 border-blue-200/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                              >
-                                <CardContent className="p-5">
-                                  <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2 flex items-center gap-1">
-                                    <Sparkles className="w-3 h-3" />
-                                    {formatLabel(field.key)}
-                                  </p>
-                                  <p className="text-lg font-semibold text-gray-900 break-words">
-                                    {field.value}
-                                  </p>
-                                </CardContent>
-                              </Card>
-                            ))}
-                          </div>
+                      {isEditing ? (
+                        <div className="space-y-4">
+                          <TiptapEditor 
+                            value={editedContent}
+                            onChange={setEditedContent}
+                          />
                           
-                          {extractedFields.length === 0 && (
-                            <div className="text-center py-16 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-300">
-                              <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                              <p className="text-gray-500 text-lg font-medium">No data extracted from the image</p>
-                              <p className="text-gray-400 text-sm mt-2">Try uploading a clearer image</p>
-                            </div>
-                          )}
+                          <div className="flex gap-2 pt-4">
+                            <Button 
+                              onClick={handleSaveChanges}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              Save Changes
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              onClick={() => {
+                                setIsEditing(false);
+                                setEditedContent("");
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
                         </div>
                       ) : (
-                        <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 p-8 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-inner max-h-[600px] overflow-y-auto">
-                          <p className="text-gray-800 dark:text-gray-200 leading-relaxed">{parsedText}</p>
-                        </div>
+                        <>
+                          <div 
+                            className="prose prose-lg dark:prose-invert max-w-none bg-white dark:bg-gray-800 p-8 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm max-h-[600px] overflow-y-auto"
+                            dangerouslySetInnerHTML={{ 
+                              __html: isPDF 
+                                ? textToHtml(parsedText)
+                                : isDOCX 
+                                  ? parsedText 
+                                  : isImage && extractedFields
+                                    ? formatImageDataAsHtml(extractedFields)
+                                    : parsedText
+                            }}
+                            style={{
+                              lineHeight: '1.8',
+                            }}
+                          />
+                        </>
                       )}
                     </CardContent>
                   </Card>
@@ -357,7 +430,7 @@ function HomePage() {
                     {[
                       { icon: FileText, title: 'PDF Support', desc: 'Extract text from any PDF document with precision' },
                       { icon: Upload, title: 'Word Files', desc: 'Parse DOCX files and preserve formatting' },
-                      { icon: Sparkles, title: 'Image OCR', desc: 'Extract text and data from images using AI' }
+                      { icon: Sparkles, title: 'Image OCR', desc: 'Extract text and data from images using Nanonets AI' }
                     ].map((feature, i) => (
                       <Card key={i} className="border-0 shadow-lg hover:shadow-xl transition-shadow bg-white/80 dark:bg-gray-800/80 backdrop-blur">
                         <CardContent className="p-6 text-center space-y-3">
